@@ -1,5 +1,7 @@
 package com.mazharulsabbir.paymentgateway.data.api
 
+import com.mazharulsabbir.paymentgateway.SSL_STORE_ID
+import com.mazharulsabbir.paymentgateway.SSL_STORE_PASSWORD
 import com.mazharulsabbir.paymentgateway.data.model.SSLPaymentGateway
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -14,8 +16,8 @@ interface SSLApiService {
     @FormUrlEncoded
     @POST("/gwprocess/v4/api.php")
     fun getSSLGatewayResponse(
-        @Field("store_id") storeId: String? = "trams5eff243c38d0a",
-        @Field("store_passwd") storePassword: String? = "trams5eff243c38d0a@ssl",
+        @Field("store_id") storeId: String? = SSL_STORE_ID,
+        @Field("store_passwd") storePassword: String? = SSL_STORE_PASSWORD,
         @Field("total_amount") totalAmount: Double?,
         @Field("currency") currency: String?,
         @Field("tran_id") transactionId: String?,
