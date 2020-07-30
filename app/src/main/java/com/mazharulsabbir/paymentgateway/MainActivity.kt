@@ -1,7 +1,10 @@
 package com.mazharulsabbir.paymentgateway
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.mazharulsabbir.paymentgateway.data.api.SSLApiService
 import com.mazharulsabbir.paymentgateway.data.model.SSLPaymentGateway
 import kotlinx.android.synthetic.main.activity_main.*
@@ -17,6 +20,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        supportActionBar?.title = "Make Payment With"
+    }
+
+    override fun onResume() {
+        super.onResume()
+        getPaymentMethods()
+    }
+
+    private fun getPaymentMethods() {
         val map = HashMap<String, String>()
         // store info
         map["store_id"] = SSL_STORE_ID
@@ -26,6 +38,11 @@ class MainActivity : AppCompatActivity() {
         map["total_amount"] = "100"
         map["currency"] = "EUR"
         map["tran_id"] = "REF123"
+
+        // redirect url
+        map["success_url"] = "http://localhost/new_sslcz_gw/success.php"
+        map["fail_url"] = "http://localhost/new_sslcz_gw/fail.php"
+        map["cancel_url"] = "http://localhost/new_sslcz_gw/cancel.php"
 
         // customer info
         map["cus_name"] = "Customer Name"
@@ -42,6 +59,7 @@ class MainActivity : AppCompatActivity() {
 
         // shipping info
         map["shipping_method"] = "NO"
+
         val sslApiService = SSLApiService.create()
         sslApiService.getSSLGatewayResponse(
             // store info
@@ -52,6 +70,11 @@ class MainActivity : AppCompatActivity() {
             totalAmount = map["total_amount"].toString().toDouble(),
             currency = map["currency"],
             transactionId = map["tran_id"],
+
+            // redirect url's
+            success_url = map["success_url"],
+            fail_url = map["fail_url"],
+            cancel_url = map["cancel_url"],
 
             // customer info
             cus_name = map["cus_name"],
@@ -69,9 +92,18 @@ class MainActivity : AppCompatActivity() {
             // shipping info
             shipping_method = map["shipping_method"]
         ).enqueue(object : Callback<SSLPaymentGateway> {
+
             override fun onFailure(call: Call<SSLPaymentGateway>, t: Throwable) {
                 t.printStackTrace()
-                json_response.text = t.message.toString()
+                t.localizedMessage?.let {
+                    Snackbar.make(
+                        recycler_view.rootView,
+                        it,
+                        Snackbar.LENGTH_SHORT
+                    )
+                        .show()
+                }
+
             }
 
             override fun onResponse(
@@ -79,9 +111,30 @@ class MainActivity : AppCompatActivity() {
                 response: Response<SSLPaymentGateway>
             ) {
                 if (response.isSuccessful && response.code() == 200) {
-                    json_response.text = response.body().toString()
+                    response.body().let {
+                        it?.desc?.let { desc ->
+                            val paymentMethodsAdapter = PaymentMethodsAdapter()
+                            paymentMethodsAdapter.submitList(desc)
+
+                            paymentMethodsAdapter.onItemClick(object : OnItemClickListener {
+                                override fun onItemClick(p: Int) {
+                                    val url = desc[p].redirectGatewayURL
+                                    val intent =
+                                        Intent(applicationContext, PaymentWithSSL::class.java)
+                                    intent.putExtra(EXTRA_GATEWAY_URL, url)
+                                    startActivity(intent)
+                                }
+                            })
+                            recycler_view.apply {
+                                hasFixedSize()
+                                this.adapter = paymentMethodsAdapter
+                                this.layoutManager = GridLayoutManager(context, 3)
+                            }
+                        }
+                    }
                 } else {
-                    json_response.text = response.message()
+                    Snackbar.make(recycler_view.rootView, response.message(), Snackbar.LENGTH_SHORT)
+                        .show()
                 }
             }
         })

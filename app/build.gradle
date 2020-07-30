@@ -39,6 +39,9 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
+    //material design
+    implementation 'com.google.android.material:material:1.1.0'
+
     // navigation component
     def version_navigation = '1.0.0'
     implementation "android.arch.navigation:navigation-fragment-ktx:$version_navigation"
@@ -48,5 +51,9 @@ dependencies {
     def retrofit_version = '2.9.0'
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+
+    // image loader
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
 
 }
